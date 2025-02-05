@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredient;
+import net.fabricmc.fabric.api.recipe.v1.ingredient.DefaultCustomIngredients;
+import net.minecraft.core.registries.Registries;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.Holder;
@@ -41,8 +44,6 @@ import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.item.crafting.ShapedRecipePattern;
 import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.level.ItemLike;
-import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
-import net.neoforged.neoforge.common.crafting.ICustomIngredient;
 
 /**
  * Extension of {@link RecipeProvider} which allows creating recipes using the syntax from Placebo's old RecipeHelper.
@@ -146,20 +147,21 @@ public abstract class LegacyRecipeProvider extends RecipeProvider {
      * Creates an {@link Ingredient} matching a potion item with the given potion type.
      */
     public static Ingredient potionIngredient(Holder<Potion> type) {
-        HolderSet<Item> items = HolderSet.direct(BuiltInRegistries.ITEM.wrapAsHolder(Items.POTION));
-        DataComponentPredicate predicate = DataComponentPredicate.builder().expect(DataComponents.POTION_CONTENTS, new PotionContents(type)).build();
-        return new Ingredient(new DataComponentIngredient(items, predicate, false));
+        return DefaultCustomIngredients.components(
+                Ingredient.of(Items.POTION), // base ingredient
+                components -> components.set( // components to match
+                        DataComponents.POTION_CONTENTS,
+                        new PotionContents(type)
+                )
+        );
     }
 
     @Override
-    protected final void buildRecipes(RecipeOutput recipeOutput, HolderLookup.Provider registries) {
+    public final void buildRecipes(RecipeOutput recipeOutput) {
         this.recipeOutput = recipeOutput;
-        this.genRecipes(recipeOutput, registries);
+        this.genRecipes(recipeOutput, null /*TODO: REGISTTRIES*/);
         this.recipeOutput = null;
     }
-
-    @Override
-    protected final void buildRecipes(RecipeOutput recipeOutput) {}
 
     /**
      * Resolves a potential path for the given output object. Avoids duplicates by appending underscores.
@@ -210,7 +212,7 @@ public abstract class LegacyRecipeProvider extends RecipeProvider {
         for (int i = 0; i < inputArr.length; i++) {
             Object input = inputArr[i];
             if (input instanceof TagKey tag) inputL.add(i, Ingredient.of(tag));
-            else if (input instanceof String str) inputL.add(i, Ingredient.of(ItemTags.create(ResourceLocation.parse(str))));
+            else if (input instanceof String str) inputL.add(i, Ingredient.of(TagKey.create(Registries.ITEM, ResourceLocation.parse(str))));
             else if (input instanceof ItemStack stack && !stack.isEmpty()) inputL.add(i, Ingredient.of(stack));
             else if (input instanceof ItemLike || input instanceof Holder) inputL.add(i, Ingredient.of(makeStack(input)));
             else if (input instanceof Ingredient ing && !ing.isEmpty()) inputL.add(i, ing);
@@ -259,9 +261,9 @@ public abstract class LegacyRecipeProvider extends RecipeProvider {
         if (ing == Ingredient.EMPTY) {
             return ' ';
         }
-        else if (ing.isCustom()) {
-            ICustomIngredient custom = ing.getCustomIngredient();
-            Item item = custom.getItems().findFirst().map(ItemStack::getItem).orElse(Items.AIR);
+        else if (ing.getCustomIngredient() != null) {
+            CustomIngredient custom = ing.getCustomIngredient();
+            Item item = custom.getMatchingStacks().stream().findFirst().map(ItemStack::getItem).orElse(Items.AIR);
             path = BuiltInRegistries.ITEM.getKey(item).getPath();
         }
         else {

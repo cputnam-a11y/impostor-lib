@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "version": "${version}",
+  "accesswidener": "META-INF/fabric/placebo.accesswidener",
+  "id": "placebo"
+}

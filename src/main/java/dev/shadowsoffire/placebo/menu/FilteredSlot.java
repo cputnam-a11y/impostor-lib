@@ -5,14 +5,15 @@ import java.util.function.Predicate;
 import com.google.common.base.Predicates;
 
 import dev.shadowsoffire.placebo.cap.InternalItemHandler;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.SlotItemHandler;
 
 /**
- * Extension of {@link SlotItemHandler} which takes a filter on what may enter the slot.
+ * Extension of {@link Slot} which takes a filter on what may enter the slot.
  */
-public class FilteredSlot extends SlotItemHandler {
+public class FilteredSlot extends Slot {
 
     protected final Predicate<ItemStack> filter;
     protected final int index;
@@ -20,20 +21,20 @@ public class FilteredSlot extends SlotItemHandler {
     /**
      * Creates a new filtered slot
      *
-     * @param handler The backing item handler
+     * @param Container The backing item handler
      * @param index   The slot index
      * @param x       The x coordinate
      * @param y       The y coordinate
      * @param filter  A filter controlling what items may be placed in the slot by a player
      */
-    public FilteredSlot(InternalItemHandler handler, int index, int x, int y, Predicate<ItemStack> filter) {
-        super(handler, index, x, y);
+    public FilteredSlot(Container Container, int index, int x, int y, Predicate<ItemStack> filter) {
+        super(Container, index, x, y);
         this.filter = filter;
         this.index = index;
     }
 
-    public FilteredSlot(InternalItemHandler handler, int index, int x, int y) {
-        this(handler, index, x, y, Predicates.alwaysTrue());
+    public FilteredSlot(Container container, int index, int x, int y) {
+        this(container, index, x, y, Predicates.alwaysTrue());
     }
 
     @Override
@@ -43,12 +44,6 @@ public class FilteredSlot extends SlotItemHandler {
 
     @Override
     public boolean mayPickup(Player playerIn) {
-        return !((InternalItemHandler) this.getItemHandler()).extractItemInternal(this.index, 1, true).isEmpty();
+        return super.mayPickup(playerIn);
     }
-
-    @Override
-    public ItemStack remove(int amount) {
-        return ((InternalItemHandler) this.getItemHandler()).extractItemInternal(this.index, amount, false);
-    }
-
 }

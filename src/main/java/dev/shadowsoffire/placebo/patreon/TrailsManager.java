@@ -1,35 +1,25 @@
 package dev.shadowsoffire.placebo.patreon;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URI;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
-import org.lwjgl.glfw.GLFW;
-
-import com.mojang.blaze3d.platform.InputConstants;
-
 import dev.shadowsoffire.placebo.Placebo;
 import dev.shadowsoffire.placebo.patreon.PatreonUtils.PatreonParticleType;
 import dev.shadowsoffire.placebo.payloads.PatreonDisablePayload;
 import dev.shadowsoffire.placebo.payloads.PatreonDisablePayload.CosmeticType;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.network.PacketDistributor;
+import org.lwjgl.glfw.GLFW;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URL;
+import java.util.*;
 
 public class TrailsManager {
 
@@ -53,22 +43,22 @@ public class TrailsManager {
                         TRAILS.put(UUID.fromString(split[0]), PatreonParticleType.valueOf(split[1]));
                     }
                     reader.close();
-                }
-                catch (IOException ex) {
+                } catch (IOException ex) {
                     Placebo.LOGGER.error("Exception loading patreon trails data!");
                     ex.printStackTrace();
                 }
-            }
-            catch (Exception k) {
+            } catch (Exception k) {
                 // not possible
             }
             Placebo.LOGGER.info("Loaded {} patreon trails.", TRAILS.size());
-            if (TRAILS.size() > 0) NeoForge.EVENT_BUS.register(TrailsManager.class);
+            if (!TRAILS.isEmpty()) {
+                ClientTickEvents.END_CLIENT_TICK.register(TrailsManager::clientTick);
+                ClientTickEvents.END_CLIENT_TICK.register(TrailsManager::tickKeys);
+            }
         }, "Placebo Patreon Trail Loader").start();
     }
 
-    @SubscribeEvent
-    public static void clientTick(ClientTickEvent.Post e) {
+    public static void clientTick(Minecraft client) {
         PatreonParticleType t = null;
         if (Minecraft.getInstance().level != null) {
             for (Player player : Minecraft.getInstance().level.players()) {
@@ -82,10 +72,12 @@ public class TrailsManager {
         }
     }
 
-    @SubscribeEvent
-    public static void keys(InputEvent.Key e) {
-        if (e.getAction() == InputConstants.PRESS && TOGGLE.matches(e.getKey(), e.getScanCode()) && Minecraft.getInstance().getConnection() != null) {
-            PacketDistributor.sendToServer(new PatreonDisablePayload(CosmeticType.TRAILS, Minecraft.getInstance().player.getUUID()));
+    public static void tickKeys(Minecraft client) {
+        if (TOGGLE.consumeClick()) {
+            ClientPlayNetworking.send(new PatreonDisablePayload(CosmeticType.TRAILS, Minecraft.getInstance().player.getUUID()));
         }
+//        if (e.getAction() == InputConstants.PRESS && TOGGLE.matches(e.getKey(), e.getScanCode()) && Minecraft.getInstance().getConnection() != null) {
+//            PacketDistributor.sendToServer(new PatreonDisablePayload(CosmeticType.TRAILS, Minecraft.getInstance().player.getUUID()));
+//        }
     }
 }

@@ -4,11 +4,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import javax.annotation.Nullable;
 
 import dev.shadowsoffire.placebo.codec.CodecProvider;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A Dynamic Holder is an implementation of {@link Holder} for {@link DynamicRegistry}.<br>
@@ -58,7 +58,7 @@ public class DynamicHolder<R extends CodecProvider<? super R>> implements Suppli
      * Gets the value, if available. This method will resolve the value if possible.
      *
      * @return The target value.
-     * @throws NullPointerException if the value is not {@linkplain #isPresent() present}.
+     * @throws NullPointerException if the value is not {@linkplain Optional#isPresent() present}.
      */
     @Override
     public R get() {

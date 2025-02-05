@@ -3,7 +3,7 @@ package dev.shadowsoffire.placebo.menu;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.world.item.ItemStack;
 
-public interface SlotUpdateListener {
+public interface    SlotUpdateListener {
 
     /**
      * Called when the client receives an item update from the server.<br>

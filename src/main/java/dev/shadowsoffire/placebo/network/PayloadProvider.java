@@ -4,13 +4,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import io.github.cputnama11y.patch.network.IPayloadContext;
 import net.minecraft.network.ConnectionProtocol;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
-import net.neoforged.neoforge.network.registration.HandlerThread;
 
 /**
  * A Payload Provider encapsulates the default components that make up a custom payload packet registration.
@@ -66,13 +65,6 @@ public interface PayloadProvider<T extends CustomPacketPayload> {
      */
     default boolean isOptional() {
         return false;
-    }
-
-    /**
-     * @return The thread that will be used to execute the {@link #handle(CustomPacketPayload, IPayloadContext)} method.
-     */
-    default HandlerThread getHandlerThread() {
-        return HandlerThread.MAIN;
     }
 
 }

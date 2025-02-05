@@ -149,8 +149,8 @@ public abstract class PlaceboContainerMenu extends AbstractContainerMenu impleme
 
     protected class UpdatingSlot extends FilteredSlot {
 
-        public UpdatingSlot(InternalItemHandler handler, int index, int x, int y, Predicate<ItemStack> filter) {
-            super(handler, index, x, y, filter);
+        public UpdatingSlot(Container container, int index, int x, int y, Predicate<ItemStack> filter) {
+            super(container, index, x, y, filter);
         }
 
         @Override

@@ -1,16 +1,15 @@
 package dev.shadowsoffire.placebo.util;
 
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
-
-import javax.annotation.Nullable;
-
-import net.minecraft.core.component.DataComponentType;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
 
 /**
  * A Cached Object is an immutable object which is stored in ItemStack NBT, but stored in Object form.<br>

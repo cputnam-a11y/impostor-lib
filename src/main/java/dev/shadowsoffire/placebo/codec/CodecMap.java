@@ -1,6 +1,5 @@
 package dev.shadowsoffire.placebo.codec;
 
-import javax.annotation.Nullable;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -8,8 +7,8 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
-
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A Codec map is simultaneously a registry of named codecs and a codec for the specified value type.
@@ -46,8 +45,10 @@ public class CodecMap<V extends CodecProvider<? super V>> implements Codec<V> {
 
     public void setDefaultCodec(Codec<? extends V> codec) {
         synchronized (this.codecs) {
-            if (this.defaultCodec != null) throw new UnsupportedOperationException("Attempted to set the default codec after it has already been set.");
-            if (this.getKey(codec) == null) throw new UnsupportedOperationException("Attempted to set the default codec without registering it first.");
+            if (this.defaultCodec != null)
+                throw new UnsupportedOperationException("Attempted to set the default codec after it has already been set.");
+            if (this.getKey(codec) == null)
+                throw new UnsupportedOperationException("Attempted to set the default codec without registering it first.");
             this.defaultCodec = codec;
         }
     }
@@ -69,7 +70,7 @@ public class CodecMap<V extends CodecProvider<? super V>> implements Codec<V> {
     /**
      * Gets a codec by type key.
      *
-     * @param typeId The key of the codec.
+     * @param key The key of the codec.
      * @return The codec registered with the passed key, or null, if none exists.
      */
     @Nullable

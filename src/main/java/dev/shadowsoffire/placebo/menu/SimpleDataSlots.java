@@ -43,9 +43,9 @@ public class SimpleDataSlots {
     /**
      * Registers an energy storage for tracking.
      */
-    public void addEnergy(ModifiableEnergyStorage energy) {
-        this.addSlot(new EnergyDataSlot(energy));
-    }
+//    public void addEnergy(ModifiableEnergyStorage energy) {
+//        this.addSlot(new EnergyDataSlot(energy));
+//    }
 
     public class LambdaDataSlot extends DataSlot {
 
@@ -69,12 +69,12 @@ public class SimpleDataSlots {
 
     }
 
-    public class EnergyDataSlot extends LambdaDataSlot {
-
-        public EnergyDataSlot(ModifiableEnergyStorage energy) {
-            super(energy::getEnergyStored, energy::setEnergy);
-        }
-    }
+//    public class EnergyDataSlot extends LambdaDataSlot {
+//
+//        public EnergyDataSlot(ModifiableEnergyStorage energy) {
+//            super(energy::getEnergyStored, energy::setEnergy);
+//        }
+//    }
 
     /**
      * Implement this interface on a {@link BlockEntity} to allow it to automatically register data slots

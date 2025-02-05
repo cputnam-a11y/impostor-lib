@@ -18,14 +18,14 @@ public interface RegistryCallback<R extends CodecProvider<? super R>> {
      *
      * @param manager The manager that is reloading.
      */
-    public void beginReload(DynamicRegistry<R> manager);
+    void beginReload(DynamicRegistry<R> manager);
 
     /**
      * Called when the manager has finished reloading, and the registry is frozen.
      *
      * @param manager The manager that is reloading.
      */
-    public void onReload(DynamicRegistry<R> manager);
+    void onReload(DynamicRegistry<R> manager);
 
     /**
      * Creates a {@link RegistryCallback} out of two consumers.
@@ -35,7 +35,7 @@ public interface RegistryCallback<R extends CodecProvider<? super R>> {
      * @param onReload    The consumer to run on reload completion.
      * @return A ListenerCallback composing the two consumers.
      */
-    public static <R extends CodecProvider<? super R>> RegistryCallback<R> create(Consumer<DynamicRegistry<R>> beginReload, Consumer<DynamicRegistry<R>> onReload) {
+    static <R extends CodecProvider<? super R>> RegistryCallback<R> create(Consumer<DynamicRegistry<R>> beginReload, Consumer<DynamicRegistry<R>> onReload) {
         return new Delegated<>(beginReload, onReload);
     }
 
@@ -46,7 +46,7 @@ public interface RegistryCallback<R extends CodecProvider<? super R>> {
      * @param beginReload The consumer to run on reload start.
      * @return A ListenerCallback that will run the consumer on reload start.
      */
-    public static <R extends CodecProvider<? super R>> RegistryCallback<R> beginOnly(Consumer<DynamicRegistry<R>> beginReload) {
+    static <R extends CodecProvider<? super R>> RegistryCallback<R> beginOnly(Consumer<DynamicRegistry<R>> beginReload) {
         return new Delegated<>(beginReload, v -> {});
     }
 
@@ -57,7 +57,7 @@ public interface RegistryCallback<R extends CodecProvider<? super R>> {
      * @param onReload The consumer to run on reload completion.
      * @return A ListenerCallback that will run the consumer on reload completion.
      */
-    public static <R extends CodecProvider<? super R>> RegistryCallback<R> reloadOnly(Consumer<DynamicRegistry<R>> onReload) {
+    static <R extends CodecProvider<? super R>> RegistryCallback<R> reloadOnly(Consumer<DynamicRegistry<R>> onReload) {
         return new Delegated<>(v -> {}, onReload);
     }
 

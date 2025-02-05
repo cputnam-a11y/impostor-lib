@@ -1,19 +1,15 @@
 package dev.shadowsoffire.placebo.util;
 
+import dev.shadowsoffire.placebo.Placebo;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import org.apache.commons.lang3.tuple.Pair;
+
 import java.util.ArrayDeque;
 import java.util.Iterator;
 import java.util.Queue;
-
-import org.apache.commons.lang3.tuple.Pair;
-
-import dev.shadowsoffire.placebo.Placebo;
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.common.EventBusSubscriber.Bus;
-import net.neoforged.neoforge.event.server.ServerStartedEvent;
-import net.neoforged.neoforge.event.server.ServerStoppedEvent;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 /**
  * Helper class for scheduling transient tick-based tasks on the server.
@@ -78,13 +74,17 @@ public class PlaceboTaskQueue {
 
     }
 
-    @EventBusSubscriber(modid = Placebo.MODID, bus = Bus.GAME)
+//    @EventBusSubscriber(modid = Placebo.MODID, bus = Bus.GAME)
     public static class Impl {
-
+        static {
+            ServerLifecycleEvents.SERVER_STARTING.register(Impl::started);
+            ServerLifecycleEvents.SERVER_STOPPING.register(Impl::stopped);
+            ServerTickEvents.END_SERVER_TICK.register(Impl::tick);
+        }
         private static final Queue<Pair<ResourceLocation, Task>> TASKS = new ArrayDeque<>();
 
-        @SubscribeEvent
-        public static void tick(ServerTickEvent.Post e) {
+//        @SubscribeEvent
+        public static void tick(MinecraftServer server) {
             Iterator<Pair<ResourceLocation, Task>> it = TASKS.iterator();
             Pair<ResourceLocation, Task> current = null;
             while (it.hasNext()) {
@@ -102,13 +102,11 @@ public class PlaceboTaskQueue {
             }
         }
 
-        @SubscribeEvent
-        public static void stopped(ServerStoppedEvent e) {
+        public static void stopped(MinecraftServer server) {
             TASKS.clear();
         }
 
-        @SubscribeEvent
-        public static void started(ServerStartedEvent e) {
+        public static void started(MinecraftServer server) {
             TASKS.clear();
         }
     }

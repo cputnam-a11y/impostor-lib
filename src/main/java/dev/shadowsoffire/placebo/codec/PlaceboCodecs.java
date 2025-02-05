@@ -22,7 +22,7 @@ public class PlaceboCodecs {
     /**
      * Creates a map-backed codec with a default codec to use as a fallback.
      *
-     * @param <V>          The type being de/serialized.
+     * @param <T>          The type being de/serialized.
      * @param name         The name of the type being de/serialized for error logging.
      * @param reg          The codec map.
      * @param defaultCodec The default codec to use if the deserialized object has no type field.
@@ -35,7 +35,7 @@ public class PlaceboCodecs {
     /**
      * Creates a map-backed codec. Deserialized objects must have a 'type' field declaring the target codec name.
      *
-     * @param <V>  The type being de/serialized.
+     * @param <T>  The type being de/serialized.
      * @param name The name of the type being de/serialized for error logging.
      * @param reg  The codec map.
      * @return A codec backed by the provided map.

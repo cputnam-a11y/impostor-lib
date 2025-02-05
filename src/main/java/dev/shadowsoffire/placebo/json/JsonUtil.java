@@ -1,12 +1,11 @@
 package dev.shadowsoffire.placebo.json;
 
+import com.google.gson.JsonElement;
+import net.fabricmc.fabric.api.resource.conditions.v1.ResourceCondition;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceLocation;
 import org.apache.logging.log4j.Logger;
 
-import com.google.gson.JsonElement;
-
-import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.common.conditions.ConditionalOps;
-import net.neoforged.neoforge.common.conditions.ICondition;
 
 public class JsonUtil {
 
@@ -33,8 +32,8 @@ public class JsonUtil {
      * @param context The context object used for resolving conditions.
      * @return True if the item's conditions are met, false otherwise.
      */
-    public static boolean checkConditions(JsonElement e, ResourceLocation id, String type, Logger logger, ConditionalOps<JsonElement> ops) {
-        if (ICondition.conditionsMatched(ops, e.getAsJsonObject())) {
+    public static boolean checkConditions(JsonElement e, ResourceLocation id, String type, Logger logger, RegistryOps<JsonElement> ops) {
+        if (ResourceCondition.CONDITION_CODEC.parse(ops, e.getAsJsonObject()).result().map(r -> r.test(null /*get registries from ops. it possible, requires copious amounts of mixin*/)).orElse(false)) {
             return true;
         }
         logger.trace("Skipping loading {} item with id {} as it's conditions were not met", type, id);

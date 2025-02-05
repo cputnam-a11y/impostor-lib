@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import dev.shadowsoffire.placebo.events.AnvilLandEvent;
+import dev.shadowsoffire.placebo.events.AnvilLandCallback;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.level.Level;
@@ -18,7 +18,7 @@ public class AnvilBlockMixin {
 
     @Inject(at = @At("TAIL"), method = "onLand", require = 1, remap = false)
     public void onLand(Level level, BlockPos pos, BlockState newState, BlockState oldState, FallingBlockEntity entity, CallbackInfo ci) {
-        NeoForge.EVENT_BUS.post(new AnvilLandEvent(level, pos, newState, oldState, entity));
+        NeoForge.EVENT_BUS.post(new AnvilLandCallback(level, pos, newState, oldState, entity));
     }
 
 }

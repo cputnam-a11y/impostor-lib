@@ -7,13 +7,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.ItemLike;
-import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+//import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 
 /**
  * Class for managing the new method of filling creative tabs,
@@ -89,8 +93,12 @@ public class TabFillingRegistry {
     }
 
     @ApiStatus.Internal
-    public static void fillTabs(BuildCreativeModeTabContentsEvent e) {
-        FILLERS.getOrDefault(e.getTabKey(), Collections.emptyList()).forEach(f -> f.fillItemCategory(e.getTab(), e));
+    public static void fillTabs() {
+        ItemGroupEvents.MODIFY_ENTRIES_ALL.register((tab, entries) -> {
+            ResourceKey<CreativeModeTab> tabKey = BuiltInRegistries.CREATIVE_MODE_TAB.getResourceKey(tab)
+                    .orElse(ResourceKey.create(Registries.CREATIVE_MODE_TAB, ResourceLocation.fromNamespaceAndPath("placebo", "dummy_tab")));
+            FILLERS.getOrDefault(tabKey, Collections.emptyList()).forEach(f -> f.fillItemCategory(tab, entries));
+        });
     }
 
     private static void registerInternal(ResourceKey<CreativeModeTab> tab, ITabFiller filler) {

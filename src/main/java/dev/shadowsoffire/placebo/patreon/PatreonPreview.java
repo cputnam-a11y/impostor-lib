@@ -16,7 +16,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 @SuppressWarnings("deprecation")
-@EventBusSubscriber(value = Dist.CLIENT, modid = Placebo.MODID)
+//@EventBusSubscriber(value = Dist.CLIENT, modid = Placebo.MODID)
 public class PatreonPreview {
 
     public static final boolean PARTICLES = false;
@@ -24,7 +24,7 @@ public class PatreonPreview {
 
     private static int counter = 0;
 
-    @SubscribeEvent
+//    @SubscribeEvent
     public static void tick(PlayerTickEvent.Post e) {
         Player player = e.getEntity();
         if (player.level().isClientSide) {

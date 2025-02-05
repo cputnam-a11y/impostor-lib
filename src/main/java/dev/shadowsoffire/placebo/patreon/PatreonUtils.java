@@ -15,7 +15,7 @@ import net.minecraft.world.entity.player.Player;
 
 public class PatreonUtils {
 
-    public static enum PatreonParticleType {
+    public enum PatreonParticleType {
         ASH(() -> ParticleTypes.ASH),
         CAMPFIRE_SMOKE(() -> ParticleTypes.CAMPFIRE_COSY_SMOKE),
         CLOUD(() -> ParticleTypes.CLOUD),
@@ -47,7 +47,7 @@ public class PatreonUtils {
         return player -> supp.get();
     }
 
-    public static enum WingType {
+    public enum WingType {
         ANGEL(() -> Wing.INSTANCE, wingTex("angel"), -0.5),
         ARMORED(() -> Wing.INSTANCE, wingTex("armored"), -0.7),
         BAT(() -> Wing.INSTANCE, wingTex("bat"), -0.7),

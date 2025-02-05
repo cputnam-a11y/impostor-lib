@@ -24,7 +24,7 @@ public record JsonMix<T>(Type type, PotionBrewing.Mix<T> mix) implements CodecPr
         return CODEC;
     }
 
-    public static enum Type {
+    public enum Type {
         CONTAINER(BuiltInRegistries.ITEM.holderByNameCodec()),
         POTION(BuiltInRegistries.POTION.holderByNameCodec());
 

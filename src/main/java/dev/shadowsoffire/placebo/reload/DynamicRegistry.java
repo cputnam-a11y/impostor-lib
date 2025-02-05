@@ -1,19 +1,5 @@
 package dev.shadowsoffire.placebo.reload;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-
-import javax.annotation.Nullable;
-
-import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.ApiStatus;
-
 import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -24,29 +10,39 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
-
+import com.mojang.serialization.JsonOps;
 import dev.shadowsoffire.placebo.Placebo;
 import dev.shadowsoffire.placebo.codec.CodecMap;
 import dev.shadowsoffire.placebo.codec.CodecProvider;
 import dev.shadowsoffire.placebo.json.JsonUtil;
+import io.github.cputnama11y.patch.hook.ServerCaptureNeoForgeDoesItDontKillMe;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.CodecException;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.ReloadableServerResources;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.common.conditions.ConditionalOps;
-import net.neoforged.neoforge.event.AddReloadListenerEvent;
-import net.neoforged.neoforge.event.OnDatapackSyncEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 /**
  * A Dynamic Registry is a reload listener which acts like a registry. Unlike datapack registries, it can reload.
@@ -119,6 +115,7 @@ public abstract class DynamicRegistry<R extends CodecProvider<? super R>> extend
         }
         this.holderCodec = ResourceLocation.CODEC.xmap(this::holder, DynamicHolder::getId);
         this.holderStreamCodec = ResourceLocation.STREAM_CODEC.map(this::holder, DynamicHolder::getId);
+        addReloader();
     }
 
     /**
@@ -134,7 +131,10 @@ public abstract class DynamicRegistry<R extends CodecProvider<? super R>> extend
     @Override
     protected final void apply(Map<ResourceLocation, JsonElement> objects, ResourceManager pResourceManager, ProfilerFiller pProfiler) {
         this.beginReload();
-        ConditionalOps<JsonElement> ops = this.makeConditionalOps();
+        RegistryOps<JsonElement> ops = RegistryOps.create(
+                JsonOps.INSTANCE,
+                ServerCaptureNeoForgeDoesItDontKillMe.get().registries().compositeAccess()
+        );
         objects.forEach((key, ele) -> {
             try {
                 if (JsonUtil.checkAndLogEmpty(ele, key, this.path, this.logger) && JsonUtil.checkConditions(ele, key, this.path, this.logger, ops)) {
@@ -223,7 +223,6 @@ public abstract class DynamicRegistry<R extends CodecProvider<? super R>> extend
      */
     public void registerToBus() {
         if (this.synced) SyncManagement.registerForSync(this);
-        NeoForge.EVENT_BUS.addListener(this::addReloader);
     }
 
     /**
@@ -370,14 +369,14 @@ public abstract class DynamicRegistry<R extends CodecProvider<? super R>> extend
      * @throws RuntimeException if any unbound holders are detected.
      */
     public final void validateExistingHolders() {
-        String error = "";
+        StringBuilder error = new StringBuilder();
         for (DynamicHolder<R> holder : this.holders.values()) {
             if (!holder.isBound()) {
-                error += "Failed to validate dynamic holder %s for registry %s\n".formatted(holder.getId(), this.getPath());
+                error.append("Failed to validate dynamic holder %s for registry %s\n".formatted(holder.getId(), this.getPath()));
             }
         }
         if (!error.isEmpty()) {
-            throw new RuntimeException(error);
+            throw new RuntimeException(error.toString());
         }
     }
 
@@ -409,8 +408,20 @@ public abstract class DynamicRegistry<R extends CodecProvider<? super R>> extend
     /**
      * Adds this reload listener to the {@link ReloadableServerResources}.
      */
-    private void addReloader(AddReloadListenerEvent e) {
-        e.addListener(this);
+    private void addReloader() {
+        UUID id = UUID.randomUUID();
+        ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new IdentifiableResourceReloadListener() {
+            final ResourceLocation loc = ResourceLocation.fromNamespaceAndPath("placebo", id.toString());
+            @Override
+            public ResourceLocation getFabricId() {
+                return loc;
+            }
+
+            @Override
+            public CompletableFuture<Void> reload(PreparationBarrier preparationBarrier, ResourceManager resourceManager, ProfilerFiller profilerFiller, ProfilerFiller profilerFiller2, Executor executor, Executor executor2) {
+                return DynamicRegistry.this.reload(preparationBarrier, resourceManager, profilerFiller, profilerFiller2, executor, executor2);
+            }
+        });
     }
 
     /**
@@ -442,13 +453,11 @@ public abstract class DynamicRegistry<R extends CodecProvider<? super R>> extend
     private CodecException makeCodecException(String msg) {
         return new CodecException("Codec failure for type %s, message: %s".formatted(this.path, msg));
     }
-
     /**
      * Sync event handler. Sends the start packet, a content packet for each item, and then the end packet.
      */
-    private void sync(OnDatapackSyncEvent e) {
-        ServerPlayer player = e.getPlayer();
-        Consumer<CustomPacketPayload> target = player == null ? PacketDistributor::sendToAllPlayers : payload -> PacketDistributor.sendToPlayer(player, payload);
+    private void sync(ServerPlayer player, boolean joined) {
+        Consumer<CustomPacketPayload> target = payload -> ServerPlayNetworking.send(player, payload);
 
         target.accept(new ReloadListenerPayloads.Start(this.path));
         this.registry.forEach((k, v) -> {
@@ -481,10 +490,21 @@ public abstract class DynamicRegistry<R extends CodecProvider<? super R>> extend
          * @throws UnsupportedOperationException if the listener is already registered to the sync registry.
          */
         static void registerForSync(DynamicRegistry<?> listener) {
-            if (!listener.synced) throw new UnsupportedOperationException("Attempted to register the non-synced JSON Reload Listener " + listener.path + " as a synced listener!");
+            if (!listener.synced)
+                throw new UnsupportedOperationException(
+                        "Attempted to register the non-synced JSON Reload Listener "
+                                + listener.path
+                                + " as a synced listener!"
+                );
             synchronized (SYNC_REGISTRY) {
-                if (SYNC_REGISTRY.containsKey(listener.path)) throw new UnsupportedOperationException("Attempted to register the JSON Reload Listener for syncing " + listener.path + " but one already exists!");
-                if (SYNC_REGISTRY.isEmpty()) NeoForge.EVENT_BUS.addListener(SyncManagement::syncAll);
+                if (SYNC_REGISTRY.containsKey(listener.path))
+                    throw new UnsupportedOperationException(
+                            "Attempted to register the JSON Reload Listener for syncing "
+                                    + listener.path
+                                    + " but one already exists!"
+                    );
+                if (SYNC_REGISTRY.isEmpty())
+                    ServerLifecycleEvents.SYNC_DATA_PACK_CONTENTS.register(SyncManagement::syncAll);
                 SYNC_REGISTRY.put(listener.path, listener);
             }
         }
@@ -554,7 +574,7 @@ public abstract class DynamicRegistry<R extends CodecProvider<? super R>> extend
          * @implNote Only called on the logical client.
          */
         static void endSync(String path) {
-            if (ServerLifecycleHooks.getCurrentServer() != null) {
+            if (ServerCaptureNeoForgeDoesItDontKillMe.get() != null) {
                 // On a singleplayer host, we have to re-register a copy of the original data instead of the synced data
                 // since the synced data may not contain the "full" information from the server.
                 ifPresent(path, DynamicRegistry::triggerClientsideReload);
@@ -575,8 +595,8 @@ public abstract class DynamicRegistry<R extends CodecProvider<? super R>> extend
             }
         }
 
-        private static void syncAll(OnDatapackSyncEvent e) {
-            SYNC_REGISTRY.values().forEach(r -> r.sync(e));
+        private static void syncAll(ServerPlayer player, boolean joined) {
+            SYNC_REGISTRY.values().forEach(r -> r.sync(player, joined));
         }
     }
 

@@ -32,7 +32,7 @@ public class GearSetRegistry extends WeightedDynamicRegistry<GearSet> {
             for (Predicate<GearSet> f : armorSets)
                 if (f.test(e)) return true;
             return false;
-        }).collect(Collectors.toList());
+        }).toList();
         if (valid.isEmpty()) {
             Placebo.LOGGER.error("Failed to locate any gear sets matching the following predicates: ");
             armorSets.forEach(s -> Placebo.LOGGER.error(s.toString()));

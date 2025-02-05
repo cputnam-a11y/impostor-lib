@@ -2,29 +2,47 @@ package dev.shadowsoffire.placebo.systems.wanderer;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-
 import dev.shadowsoffire.placebo.json.OptionalStackCodec;
+import net.minecraft.core.component.DataComponentPredicate;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.npc.VillagerTrades;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.common.BasicItemListing;
+import net.minecraft.world.item.trading.ItemCost;
+import net.minecraft.world.item.trading.MerchantOffer;
+import org.jetbrains.annotations.Nullable;
 
-public class BasicWandererTrade extends BasicItemListing implements WandererTrade {
+import java.util.Optional;
+
+public class BasicWandererTrade implements VillagerTrades.ItemListing, WandererTrade {
+    protected final ItemStack price;
+    protected final ItemStack price2;
+    protected final ItemStack forSale;
+    protected final int maxTrades;
+    protected final int xp;
+    protected final float priceMult;
 
     public static Codec<BasicWandererTrade> CODEC = RecordCodecBuilder.create(inst -> inst
-        .group(
-            OptionalStackCodec.INSTANCE.fieldOf("input_1").forGetter(trade -> trade.price),
-            OptionalStackCodec.INSTANCE.optionalFieldOf("input_2", ItemStack.EMPTY).forGetter(trade -> trade.price2),
-            OptionalStackCodec.INSTANCE.fieldOf("output").forGetter(trade -> trade.forSale),
-            Codec.INT.optionalFieldOf("max_trades", 1).forGetter(trade -> trade.maxTrades),
-            Codec.INT.optionalFieldOf("xp", 0).forGetter(trade -> trade.xp),
-            Codec.FLOAT.optionalFieldOf("price_mult", 1F).forGetter(trade -> trade.priceMult),
-            Codec.BOOL.optionalFieldOf("rare", false).forGetter(trade -> trade.rare))
-        .apply(inst, BasicWandererTrade::new));
+            .group(
+                    OptionalStackCodec.INSTANCE.fieldOf("input_1").forGetter(trade -> trade.price),
+                    OptionalStackCodec.INSTANCE.optionalFieldOf("input_2", ItemStack.EMPTY).forGetter(trade -> trade.price2),
+                    OptionalStackCodec.INSTANCE.fieldOf("output").forGetter(trade -> trade.forSale),
+                    Codec.INT.optionalFieldOf("max_trades", 1).forGetter(trade -> trade.maxTrades),
+                    Codec.INT.optionalFieldOf("xp", 0).forGetter(trade -> trade.xp),
+                    Codec.FLOAT.optionalFieldOf("price_mult", 1F).forGetter(trade -> trade.priceMult),
+                    Codec.BOOL.optionalFieldOf("rare", false).forGetter(trade -> trade.rare))
+            .apply(inst, BasicWandererTrade::new));
 
     protected final boolean rare;
 
     public BasicWandererTrade(ItemStack price, ItemStack price2, ItemStack forSale, int maxTrades, int xp, float priceMult, boolean rare) {
-        super(price, price2, forSale, maxTrades, xp, priceMult);
+        this.price = price;
+        this.price2 = price2;
+        this.forSale = forSale;
+        this.maxTrades = maxTrades;
+        this.xp = xp;
+        this.priceMult = priceMult;
         this.rare = rare;
     }
 
@@ -36,6 +54,16 @@ public class BasicWandererTrade extends BasicItemListing implements WandererTrad
     @Override
     public Codec<? extends WandererTrade> getCodec() {
         return CODEC;
+    }
+
+    @Nullable
+    @Override
+    public MerchantOffer getOffer(Entity p_219693_, RandomSource p_219694_) {
+        ItemCost cost = new ItemCost(price.getItemHolder(), price.getCount(), DataComponentPredicate.EMPTY, price);
+        Optional<ItemCost> optionalSecondCost = price2.isEmpty()
+                                                ? Optional.empty()
+                                                : Optional.of(new ItemCost(price2.getItemHolder(), price2.getCount(), DataComponentPredicate.EMPTY, price2));
+        return new MerchantOffer(cost, optionalSecondCost, forSale, maxTrades, xp, priceMult);
     }
 
     public static Builder builder() {
@@ -102,5 +130,4 @@ public class BasicWandererTrade extends BasicItemListing implements WandererTrad
             return new BasicWandererTrade(price, price2, forSale, maxTrades, xp, priceMult, rare);
         }
     }
-
 }

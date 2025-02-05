@@ -6,16 +6,13 @@ import java.util.List;
 import dev.shadowsoffire.placebo.Placebo;
 import dev.shadowsoffire.placebo.PlaceboConfig;
 import dev.shadowsoffire.placebo.reload.DynamicRegistry;
+import net.fabricmc.fabric.api.object.builder.v1.trade.TradeOfferHelper;
 import net.minecraft.world.entity.npc.VillagerTrades.ItemListing;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.common.EventBusSubscriber.Bus;
 import net.neoforged.neoforge.event.village.WandererTradesEvent;
 
 /**
  * Allows loading wandering trader trades from json.
  */
-@EventBusSubscriber(modid = Placebo.MODID, bus = Bus.GAME)
 public class WandererTradesRegistry extends DynamicRegistry<WandererTrade> {
 
     public static final WandererTradesRegistry INSTANCE = new WandererTradesRegistry();
@@ -52,7 +49,6 @@ public class WandererTradesRegistry extends DynamicRegistry<WandererTrade> {
         });
     }
 
-    @SubscribeEvent
     public static void replaceTrades(WandererTradesEvent e) {
         if (PlaceboConfig.clearWandererNormalTrades) {
             e.getGenericTrades().clear();

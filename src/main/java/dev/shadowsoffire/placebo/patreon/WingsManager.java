@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.model.geom.LayerDefinitions;
 import org.lwjgl.glfw.GLFW;
 
 import com.mojang.blaze3d.platform.InputConstants;
@@ -23,13 +26,6 @@ import dev.shadowsoffire.placebo.payloads.PatreonDisablePayload.CosmeticType;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
-import net.neoforged.neoforge.client.ClientHooks;
-import net.neoforged.neoforge.client.event.InputEvent;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.network.PacketDistributor;
-
 public class WingsManager {
 
     static Map<UUID, WingType> WINGS = new HashMap<>();
@@ -37,10 +33,9 @@ public class WingsManager {
     public static final Set<UUID> DISABLED = new HashSet<>();
     public static final ModelLayerLocation WING_LOC = new ModelLayerLocation(Placebo.loc("wings"), "main");
 
-    public static void init(FMLClientSetupEvent e) {
-        e.enqueueWork(() -> {
-            ClientHooks.registerLayerDefinition(WING_LOC, Wing::createLayer);
-        });
+    public static void init() {
+                // i think mixin required? TODO
+//            ClientHooks.registerLayerDefinition(WING_LOC, Wing::createLayer);
         new Thread(() -> {
             Placebo.LOGGER.info("Loading patreon wing data...");
             try {
@@ -66,14 +61,13 @@ public class WingsManager {
                 // not possible
             }
             Placebo.LOGGER.info("Loaded {} patreon wings.", WINGS.size());
-            if (WINGS.size() > 0) NeoForge.EVENT_BUS.register(WingsManager.class);
+            if (!WINGS.isEmpty()) ClientTickEvents.END_CLIENT_TICK.register(WingsManager::tickKeys);
         }, "Placebo Patreon Wing Loader").start();
     }
 
-    @SubscribeEvent
-    public static void keys(InputEvent.Key e) {
-        if (e.getAction() == InputConstants.PRESS && TOGGLE.matches(e.getKey(), e.getScanCode()) && Minecraft.getInstance().getConnection() != null) {
-            PacketDistributor.sendToServer(new PatreonDisablePayload(CosmeticType.WINGS, Minecraft.getInstance().player.getUUID()));
+    public static void tickKeys(Minecraft minecraft) {
+        if (TOGGLE.consumeClick()) {
+            ClientPlayNetworking.send(new PatreonDisablePayload(CosmeticType.WINGS, Minecraft.getInstance().player.getUUID()));
         }
     }
 

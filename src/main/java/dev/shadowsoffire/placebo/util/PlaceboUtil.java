@@ -5,6 +5,8 @@ import java.util.List;
 
 import com.google.common.collect.ImmutableList;
 
+import com.google.common.collect.ImmutableMap;
+import io.github.cputnama11y.patch.mixin.TextColorAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
@@ -94,7 +96,10 @@ public class PlaceboUtil {
      * This is not required for any static color values, because they can be represented as a hex int.
      */
     public static <T extends TextColor> void registerCustomColor(T color) {
-        TextColor.NAMED_COLORS.put(color.serialize(), color);
+        var builder = ImmutableMap.<String, TextColor>builder();
+        builder.putAll(TextColorAccessor.placebo$getNamedColors());
+        builder.put(color.serialize(), color);
+        TextColorAccessor.placebo$setNamedColors(builder.build());
     }
 
 }

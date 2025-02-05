@@ -3,6 +3,7 @@ package dev.shadowsoffire.placebo.reload;
 import java.util.List;
 import java.util.Optional;
 
+import io.github.cputnama11y.patch.network.IPayloadContext;
 import org.jetbrains.annotations.ApiStatus;
 
 import com.mojang.datafixers.util.Either;
@@ -21,8 +22,6 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.network.connection.ConnectionType;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 @ApiStatus.Internal
 public class ReloadListenerPayloads {
@@ -74,7 +73,7 @@ public class ReloadListenerPayloads {
         }
     }
 
-    public static record Content<V extends CodecProvider<? super V>>(String path, ResourceLocation key, Either<V, ByteBuf> item) implements CustomPacketPayload {
+    public record Content<V extends CodecProvider<? super V>>(String path, ResourceLocation key, Either<V, ByteBuf> item) implements CustomPacketPayload {
 
         public static final Type<Content<?>> TYPE = new Type<>(Placebo.loc("reload_sync_content"));
 
@@ -93,10 +92,11 @@ public class ReloadListenerPayloads {
             return TYPE;
         }
 
-        public static <V extends CodecProvider<? super V>> void write(RegistryFriendlyByteBuf buf, Content<V> payload) {
+        @SuppressWarnings("unchecked")
+        public static <V extends CodecProvider<? super V>> void write(RegistryFriendlyByteBuf buf, Content<?> payload) {
             buf.writeUtf(payload.path, 50);
             buf.writeResourceLocation(payload.key);
-            SyncManagement.writeItem(payload.path, payload.item.orThrow(), buf);
+            SyncManagement.writeItem(payload.path, (V) payload.item.orThrow(), buf);
         }
 
         /**
@@ -127,7 +127,7 @@ public class ReloadListenerPayloads {
 
             @Override
             public void handle(Content<?> msg, IPayloadContext ctx) {
-                RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(msg.item.right().get(), ctx.player().registryAccess(), ConnectionType.NEOFORGE);
+                RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(msg.item.right().get(), ctx.player().registryAccess());
 
                 try {
                     V value = SyncManagement.readItem(msg.path, buf);

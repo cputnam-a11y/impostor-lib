@@ -3,6 +3,9 @@ package dev.shadowsoffire.placebo.systems.mixes;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.github.cputnama11y.patch.hook.ServerCaptureNeoForgeDoesItDontKillMe;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
 import org.jetbrains.annotations.Nullable;
 
 import dev.shadowsoffire.placebo.Placebo;
@@ -10,9 +13,6 @@ import dev.shadowsoffire.placebo.PlaceboClient;
 import dev.shadowsoffire.placebo.reload.DynamicRegistry;
 import dev.shadowsoffire.placebo.systems.mixes.JsonMix.Type;
 import net.minecraft.world.item.alchemy.PotionBrewing;
-import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public class MixRegistry extends DynamicRegistry<JsonMix<?>> {
 
@@ -44,7 +44,7 @@ public class MixRegistry extends DynamicRegistry<JsonMix<?>> {
     }
 
     /**
-     * Called externally during the {@link ServerAboutToStartEvent} since the first reload on dedi is too early.
+     * Called externally during the ServerAboutToStartEvent since the first reload on dedi is too early.
      */
     public static void applyMixes() {
         for (PotionBrewing brewing : resolveBrewing()) {
@@ -59,12 +59,12 @@ public class MixRegistry extends DynamicRegistry<JsonMix<?>> {
      */
     private static List<@Nullable PotionBrewing> resolveBrewing() {
         List<PotionBrewing> registries = new ArrayList<>();
-        if (FMLEnvironment.dist.isClient()) {
+        if (FabricLoader.getInstance().getEnvironmentType().equals(EnvType.CLIENT)) {
             registries.add(PlaceboClient.getBrewingRegistry());
         }
 
-        if (ServerLifecycleHooks.getCurrentServer() != null) {
-            registries.add(ServerLifecycleHooks.getCurrentServer().potionBrewing());
+        if (ServerCaptureNeoForgeDoesItDontKillMe.get() != null) {
+            registries.add(ServerCaptureNeoForgeDoesItDontKillMe.get().potionBrewing());
         }
 
         return registries;

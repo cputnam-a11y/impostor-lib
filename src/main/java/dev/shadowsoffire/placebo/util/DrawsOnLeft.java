@@ -2,13 +2,24 @@ package dev.shadowsoffire.placebo.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import dev.shadowsoffire.placebo.mixin.client.AbstractContainerScreenMixin;
+import io.github.cputnama11y.patch.mixin.GUIGraphicsAccessor;
+import net.minecraft.client.ComponentCollector;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -17,7 +28,8 @@ import net.minecraft.world.item.ItemStack;
  * Applied to all screens via {@link AbstractContainerScreenMixin}.
  */
 public interface DrawsOnLeft {
-
+    int placebo$getGuiLeft();
+    Font placebo$getFont();
     /**
      * Renders a list of text as a tooltip attached to the left edge of the currently open container screen.
      * <p>
@@ -25,10 +37,10 @@ public interface DrawsOnLeft {
      */
     default void drawOnLeft(GuiGraphics gfx, List<? extends FormattedText> list, int y) {
         if (list.isEmpty()) return;
-        int xPos = __ths().getGuiLeft() - 16 - list.stream().map(__ths().font::width).max(Integer::compare).get();
+        int xPos = placebo$getGuiLeft() - 16 - list.stream().map(placebo$getFont()::width).max(Integer::compare).get();
         int maxWidth = 9999;
         if (xPos < 0) {
-            maxWidth = __ths().getGuiLeft() - 6;
+            maxWidth = placebo$getGuiLeft() - 6;
             xPos = -8;
         }
 
@@ -36,10 +48,20 @@ public interface DrawsOnLeft {
         int _maxWidth = maxWidth;
         list.forEach(text -> {
             Style style = text instanceof Component comp ? comp.getStyle() : Style.EMPTY;
-            __ths().font.getSplitter().splitLines(text, _maxWidth, style, (splitLine, isBlank) -> split.add(splitLine));
+            placebo$getFont().getSplitter().splitLines(text, _maxWidth, style, (splitLine, isBlank) -> split.add(splitLine));
         });
-
-        gfx.renderComponentTooltip(__ths().font, split, xPos, y, ItemStack.EMPTY);
+        List<ClientTooltipComponent> tooltips = split.stream()
+                .map(Language.getInstance()::getVisualOrder)
+                .map(ClientTooltipComponent::create)
+                .toList();
+        ((GUIGraphicsAccessor)gfx).placebo$renderTooltipInternal(
+                placebo$getFont(),
+                tooltips,
+                xPos,
+                y,
+                DefaultTooltipPositioner.INSTANCE
+        );
+//        gfx.renderComponentTooltip(placebo$getFont(), split, xPos, y, ItemStack.EMPTY);
     }
 
     /**
@@ -55,18 +77,28 @@ public interface DrawsOnLeft {
         List<FormattedText> split = new ArrayList<>();
         list.forEach(text -> {
             Style style = text instanceof Component comp ? comp.getStyle() : Style.EMPTY;
-            __ths().font.getSplitter().splitLines(text, maxWidth, style, (splitLine, isBlank) -> split.add(splitLine));
+            placebo$getFont().getSplitter().splitLines(text, maxWidth, style, (splitLine, isBlank) -> split.add(splitLine));
         });
-
-        int xPos = __ths().getGuiLeft() - 16 - split.stream().map(__ths().font::width).max(Integer::compare).get();
-        gfx.renderComponentTooltip(__ths().font, split, xPos, y, ItemStack.EMPTY);
+        List<ClientTooltipComponent> tooltips = split.stream()
+                .map(Language.getInstance()::getVisualOrder)
+                        .map(ClientTooltipComponent::create)
+                                .toList();
+        int xPos = placebo$getGuiLeft() - 16 - split.stream().map(placebo$getFont()::width).max(Integer::compare).get();
+        ((GUIGraphicsAccessor)gfx).placebo$renderTooltipInternal(
+                placebo$getFont(),
+                tooltips,
+                xPos,
+                y,
+                DefaultTooltipPositioner.INSTANCE
+        );
+//        gfx.renderComponentTooltip(placebo$getFont(), split, xPos, y);
     }
 
     default AbstractContainerScreen<?> __ths() {
         return (AbstractContainerScreen<?>) this;
     }
 
-    public static void draw(AbstractContainerScreen<?> screen, GuiGraphics gfx, List<Component> list, int y) {
+    static void draw(AbstractContainerScreen<?> screen, GuiGraphics gfx, List<Component> list, int y) {
         ((DrawsOnLeft) screen).drawOnLeft(gfx, list, y);
     }
 

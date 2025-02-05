@@ -30,15 +30,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 
-import org.checkerframework.checker.nullness.qual.Nullable;
-
 import com.google.common.base.Objects;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ForwardingMapEntry;
 import com.google.common.collect.ForwardingSet;
-import com.google.errorprone.annotations.concurrent.LazyInit;
-import com.google.j2objc.annotations.WeakOuter;
+//import com.google.errorprone.annotations.concurrent.LazyInit;
+//import com.google.j2objc.annotations.WeakOuter;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Copy of Guava's AbstractBiMap since the original is package private.
@@ -208,7 +207,7 @@ public abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nulla
         return inverse;
     }
 
-    @LazyInit
+//    @LazyInit
 
     private transient Set<K> keySet;
 
@@ -218,7 +217,7 @@ public abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nulla
         return (result == null) ? keySet = new KeySet() : result;
     }
 
-    @WeakOuter
+//    @WeakOuter
     private class KeySet extends ForwardingSet<K> {
         @Override
         protected Set<K> delegate() {
@@ -306,7 +305,7 @@ public abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nulla
         }
     }
 
-    @LazyInit
+//    @LazyInit
 
     private transient Set<Entry<K, V>> entrySet;
 
@@ -375,7 +374,7 @@ public abstract class AbstractBiMap<K extends @Nullable Object, V extends @Nulla
         };
     }
 
-    @WeakOuter
+//    @WeakOuter
     private class EntrySet extends ForwardingSet<Entry<K, V>> {
         final Set<Entry<K, V>> esDelegate = delegate.entrySet();
 
