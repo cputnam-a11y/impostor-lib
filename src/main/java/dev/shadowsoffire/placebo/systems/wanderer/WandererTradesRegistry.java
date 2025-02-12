@@ -1,14 +1,13 @@
 package dev.shadowsoffire.placebo.systems.wanderer;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import dev.shadowsoffire.placebo.Placebo;
 import dev.shadowsoffire.placebo.PlaceboConfig;
 import dev.shadowsoffire.placebo.reload.DynamicRegistry;
-import net.fabricmc.fabric.api.object.builder.v1.trade.TradeOfferHelper;
 import net.minecraft.world.entity.npc.VillagerTrades.ItemListing;
 import net.neoforged.neoforge.event.village.WandererTradesEvent;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Allows loading wandering trader trades from json.

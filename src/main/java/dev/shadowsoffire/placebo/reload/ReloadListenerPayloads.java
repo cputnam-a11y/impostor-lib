@@ -1,79 +1,68 @@
 package dev.shadowsoffire.placebo.reload;
 
-import java.util.List;
-import java.util.Optional;
-
-import io.github.cputnama11y.patch.network.IPayloadContext;
-import org.jetbrains.annotations.ApiStatus;
-
 import com.mojang.datafixers.util.Either;
-
 import dev.shadowsoffire.placebo.Placebo;
 import dev.shadowsoffire.placebo.codec.CodecProvider;
-import dev.shadowsoffire.placebo.network.PayloadProvider;
 import dev.shadowsoffire.placebo.reload.DynamicRegistry.SyncManagement;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import net.minecraft.network.ConnectionProtocol;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public class ReloadListenerPayloads {
 
     public static record Start(String path) implements CustomPacketPayload {
 
+        public static final Runnable registerClient = FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT
+                                                      ? Start.ClientHandler::register
+                                                      : () -> {
+                                                      };
+
         public static final Type<Start> TYPE = new Type<>(Placebo.loc("reload_sync_start"));
 
         public static final StreamCodec<FriendlyByteBuf, Start> CODEC = StreamCodec.composite(
-            ByteBufCodecs.STRING_UTF8, Start::path,
-            Start::new);
+                ByteBufCodecs.STRING_UTF8, Start::path,
+                Start::new);
 
         @Override
         public Type<? extends CustomPacketPayload> type() {
             return TYPE;
         }
 
-        public static class Provider implements PayloadProvider<Start> {
+        public static void init() {
+            PayloadTypeRegistry.playS2C().register(TYPE, CODEC);
+            registerClient.run();
+        }
 
+        private static class ClientHandler implements ClientPlayNetworking.PlayPayloadHandler<Start> {
             @Override
-            public Type<Start> getType() {
-                return TYPE;
+            public void receive(Start payload, ClientPlayNetworking.Context context) {
+                SyncManagement.initSync(payload.path);
             }
 
-            @Override
-            public StreamCodec<? super RegistryFriendlyByteBuf, Start> getCodec() {
-                return CODEC;
-            }
-
-            @Override
-            public void handle(Start msg, IPayloadContext ctx) {
-                SyncManagement.initSync(msg.path);
-            }
-
-            @Override
-            public List<ConnectionProtocol> getSupportedProtocols() {
-                return List.of(ConnectionProtocol.PLAY);
-            }
-
-            @Override
-            public Optional<PacketFlow> getFlow() {
-                return Optional.of(PacketFlow.CLIENTBOUND);
-            }
-
-            @Override
-            public String getVersion() {
-                return "1";
+            public static void register() {
+                ClientPlayNetworking.registerGlobalReceiver(TYPE, new ClientHandler());
             }
         }
     }
 
     public record Content<V extends CodecProvider<? super V>>(String path, ResourceLocation key, Either<V, ByteBuf> item) implements CustomPacketPayload {
+
+        public static final Runnable registerClient = FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT
+                                                      ? Content.ClientHandler::register
+                                                      : () -> {
+                                                      };
 
         public static final Type<Content<?>> TYPE = new Type<>(Placebo.loc("reload_sync_content"));
 
@@ -90,6 +79,11 @@ public class ReloadListenerPayloads {
         @Override
         public Type<? extends CustomPacketPayload> type() {
             return TYPE;
+        }
+
+        public static void init() {
+            PayloadTypeRegistry.playS2C().register(TYPE, CODEC);
+            registerClient.run();
         }
 
         @SuppressWarnings("unchecked")
@@ -113,92 +107,61 @@ public class ReloadListenerPayloads {
             return new Content<V>(path, key, itemBuf);
         }
 
-        public static class Provider<V extends CodecProvider<? super V>> implements PayloadProvider<Content<?>> {
-
+        private static class ClientHandler implements ClientPlayNetworking.PlayPayloadHandler<Content<?>> {
             @Override
-            public Type<Content<?>> getType() {
-                return TYPE;
-            }
-
-            @Override
-            public StreamCodec<? super RegistryFriendlyByteBuf, Content<?>> getCodec() {
-                return CODEC;
-            }
-
-            @Override
-            public void handle(Content<?> msg, IPayloadContext ctx) {
-                RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(msg.item.right().get(), ctx.player().registryAccess());
+            public void receive(Content<?> payload, ClientPlayNetworking.Context context) {
+                RegistryFriendlyByteBuf buf = new RegistryFriendlyByteBuf(payload.item.right().get(), context.player().registryAccess());
 
                 try {
-                    V value = SyncManagement.readItem(msg.path, buf);
-                    SyncManagement.acceptItem(msg.path, msg.key, value);
-                }
-                catch (Exception ex) {
-                    Placebo.LOGGER.error("Failure when deserializing a dynamic registry object via network: Registry: {}, Object ID: {}", msg.path, msg.key);
+                    Object value = SyncManagement.readItem(payload.path, buf);
+                    SyncManagement.acceptItem(payload.path, payload.key, value);
+                } catch (Exception ex) {
+                    Placebo.LOGGER.error("Failure when deserializing a dynamic registry object via network: Registry: {}, Object ID: {}", payload.path, payload.key);
                     throw ex;
                 }
             }
 
-            @Override
-            public List<ConnectionProtocol> getSupportedProtocols() {
-                return List.of(ConnectionProtocol.PLAY);
-            }
-
-            @Override
-            public Optional<PacketFlow> getFlow() {
-                return Optional.of(PacketFlow.CLIENTBOUND);
-            }
-
-            @Override
-            public String getVersion() {
-                return "1";
+            public static void register() {
+                ClientPlayNetworking.registerGlobalReceiver(TYPE, new ClientHandler());
             }
         }
     }
 
-    public static record End(String path) implements CustomPacketPayload {
+    public record End(String path) implements CustomPacketPayload {
+
+        public static final Runnable registerClient = FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT
+                                                      ? ClientHandler::register
+                                                      : () -> {
+                                                      };
 
         public static final Type<End> TYPE = new Type<>(Placebo.loc("reload_sync_end"));
 
         public static final StreamCodec<FriendlyByteBuf, End> CODEC = StreamCodec.composite(
-            ByteBufCodecs.STRING_UTF8, End::path,
-            End::new);
+                ByteBufCodecs.STRING_UTF8,
+                End::path,
+                End::new
+        );
 
         @Override
+        @NotNull
         public Type<? extends CustomPacketPayload> type() {
             return TYPE;
         }
 
-        public static class Provider implements PayloadProvider<End> {
+        public static void init() {
+            PayloadTypeRegistry.playS2C().register(TYPE, CODEC);
+            registerClient.run();
+        }
 
-            @Override
-            public Type<End> getType() {
-                return TYPE;
+        private static class ClientHandler implements ClientPlayNetworking.PlayPayloadHandler<End> {
+
+            public static void register() {
+                ClientPlayNetworking.registerGlobalReceiver(TYPE, new ClientHandler());
             }
 
             @Override
-            public StreamCodec<? super RegistryFriendlyByteBuf, End> getCodec() {
-                return CODEC;
-            }
-
-            @Override
-            public void handle(End msg, IPayloadContext ctx) {
-                SyncManagement.endSync(msg.path);
-            }
-
-            @Override
-            public List<ConnectionProtocol> getSupportedProtocols() {
-                return List.of(ConnectionProtocol.PLAY);
-            }
-
-            @Override
-            public Optional<PacketFlow> getFlow() {
-                return Optional.of(PacketFlow.CLIENTBOUND);
-            }
-
-            @Override
-            public String getVersion() {
-                return "1";
+            public void receive(End payload, ClientPlayNetworking.Context context) {
+                SyncManagement.endSync(payload.path);
             }
         }
     }

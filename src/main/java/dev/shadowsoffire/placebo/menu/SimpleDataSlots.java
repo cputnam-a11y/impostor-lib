@@ -1,16 +1,15 @@
 package dev.shadowsoffire.placebo.menu;
 
+import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
+import net.minecraft.world.inventory.DataSlot;
+import net.minecraft.world.level.block.entity.BlockEntity;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
-
-import dev.shadowsoffire.placebo.cap.ModifiableEnergyStorage;
-import it.unimi.dsi.fastutil.booleans.BooleanConsumer;
-import net.minecraft.world.inventory.DataSlot;
-import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
  * Simple DataSlot implementation that allows for lambda registration.

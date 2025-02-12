@@ -1,31 +1,22 @@
 package dev.shadowsoffire.placebo.patreon;
 
+import dev.shadowsoffire.placebo.Placebo;
+import dev.shadowsoffire.placebo.patreon.PatreonUtils.WingType;
+import dev.shadowsoffire.placebo.payloads.PatreonDisablePayload;
+import dev.shadowsoffire.placebo.payloads.PatreonDisablePayload.CosmeticType;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.geom.ModelLayerLocation;
+import org.lwjgl.glfw.GLFW;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.model.geom.LayerDefinitions;
-import org.lwjgl.glfw.GLFW;
-
-import com.mojang.blaze3d.platform.InputConstants;
-
-import dev.shadowsoffire.placebo.Placebo;
-import dev.shadowsoffire.placebo.patreon.PatreonUtils.WingType;
-import dev.shadowsoffire.placebo.patreon.wings.Wing;
-import dev.shadowsoffire.placebo.payloads.PatreonDisablePayload;
-import dev.shadowsoffire.placebo.payloads.PatreonDisablePayload.CosmeticType;
-import net.minecraft.client.KeyMapping;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.geom.ModelLayerLocation;
+import java.util.*;
 public class WingsManager {
 
     static Map<UUID, WingType> WINGS = new HashMap<>();
@@ -34,8 +25,6 @@ public class WingsManager {
     public static final ModelLayerLocation WING_LOC = new ModelLayerLocation(Placebo.loc("wings"), "main");
 
     public static void init() {
-                // i think mixin required? TODO
-//            ClientHooks.registerLayerDefinition(WING_LOC, Wing::createLayer);
         new Thread(() -> {
             Placebo.LOGGER.info("Loading patreon wing data...");
             try {

@@ -1,14 +1,12 @@
 package dev.shadowsoffire.placebo.menu;
 
-import java.util.function.Predicate;
-
 import com.google.common.base.Predicates;
-
-import dev.shadowsoffire.placebo.cap.InternalItemHandler;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.function.Predicate;
 
 /**
  * Extension of {@link Slot} which takes a filter on what may enter the slot.

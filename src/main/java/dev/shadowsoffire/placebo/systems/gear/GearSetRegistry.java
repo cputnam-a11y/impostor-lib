@@ -1,18 +1,16 @@
 package dev.shadowsoffire.placebo.systems.gear;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
-import org.jetbrains.annotations.Nullable;
-
 import dev.shadowsoffire.placebo.Placebo;
 import dev.shadowsoffire.placebo.reload.WeightedDynamicRegistry;
 import dev.shadowsoffire.placebo.systems.gear.GearSet.SetPredicate;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.random.WeightedEntry.Wrapper;
 import net.minecraft.util.random.WeightedRandom;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 public class GearSetRegistry extends WeightedDynamicRegistry<GearSet> {
 

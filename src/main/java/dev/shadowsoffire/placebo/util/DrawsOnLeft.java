@@ -1,13 +1,7 @@
 package dev.shadowsoffire.placebo.util;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import dev.shadowsoffire.placebo.mixin.client.AbstractContainerScreenMixin;
 import io.github.cputnama11y.patch.mixin.GUIGraphicsAccessor;
-import net.minecraft.client.ComponentCollector;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -16,11 +10,10 @@ import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPosition
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.util.FormattedCharSequence;
-import net.minecraft.world.inventory.tooltip.TooltipComponent;
-import net.minecraft.world.item.ItemStack;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implement this on a screen class to be able to call {@link #drawOnLeft(GuiGraphics, List, int)}

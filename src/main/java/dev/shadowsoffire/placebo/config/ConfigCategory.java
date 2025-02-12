@@ -36,7 +36,7 @@ import com.google.common.collect.ImmutableSet;
 
 public class ConfigCategory implements Map<String, Property> {
     public static final String COMMENT_SEPARATOR = "##########################################################################################################";
-    public static final String NEW_LINE = System.getProperty("line.separator");
+    public static final String NEW_LINE = System.lineSeparator();
     public static final String ALLOWED_CHARS = "._-";
     public static final CharMatcher allowedProperties = Configuration.allowedProperties;
 

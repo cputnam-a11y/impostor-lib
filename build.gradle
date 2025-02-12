@@ -68,6 +68,17 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(project.properties.javaV
 //}
 
 repositories {
+    exclusiveContent {
+        forRepository {
+            repositories.maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
 //    maven {
 //        // CurseForge
 //        url "https://www.cursemaven.com"
@@ -121,6 +132,9 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:0.16.10"
     modImplementation "net.fabricmc.fabric-api:fabric-api:0.115.0+1.21.1"
+    modImplementation("maven.modrinth:lootmodificationlib:LCeHliua") {
+        exclude group: "net.fabricmc.fabric-api"
+    }
 //    if (project.mixin.toBoolean())                   annotationProcessor "org.spongepowered:mixin:${mixinVersion}:processor"
 //    if (project.hasProperty('placeboVersion'))       implementation      "dev.shadowsoffire:Placebo:${mcVersion}-${placeboVersion}"
 //    if (project.hasProperty('jeiVersion'))           localImplementation "mezz.jei:jei-${mcVersion}-neoforge:${jeiVersion}"

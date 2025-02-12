@@ -12,6 +12,9 @@ import dev.shadowsoffire.placebo.menu.MenuUtil.PosFactory;
 import dev.shadowsoffire.placebo.util.DeferredSet;
 import io.github.cputnama11y.patch.mixin.BlockEntityTypeAccessor;
 import io.github.cputnama11y.patch.mixin.SimpleParticleTypeAccessor;
+import lootmodificationlib.api.event.ModifyDrops;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredient;
 import net.fabricmc.fabric.api.recipe.v1.ingredient.CustomIngredientSerializer;
 import net.minecraft.advancements.CriterionTrigger;
@@ -446,28 +449,18 @@ public class DeferredHelper {
         return type;
     }
 
-//   TODO:CONVERT TO FABIRC
-//     /**
-//     * Registers an {@link AttachmentType} with the specified default value, that is configured with the supplied operator.
-//     * <p>
-//     * Immediately constructs the {@link AttachmentType} and returns it. Registration is deferred until the appropriate time.
-//     */
-//    public <T> AttachmentType<T> attachment(String path, Supplier<T> defaultValue, UnaryOperator<AttachmentType.Builder<T>> operator) {
-//        AttachmentType<T> type = operator.apply(AttachmentType.builder(defaultValue)).build();
-//        this.register(path, NeoForgeRegistries.Keys.ATTACHMENT_TYPES, () -> type);
-//        return type;
-//    }
-//
-//    /**
-//     * Registers an {@link AttachmentType} with the specified default value, that is configured with the supplied operator.
-//     * <p>
-//     * Immediately constructs the {@link AttachmentType} and returns it. Registration is deferred until the appropriate time.
-//     */
-//    public <T> AttachmentType<T> attachment(String path, Function<IAttachmentHolder, T> defaultValue, UnaryOperator<AttachmentType.Builder<T>> operator) {
-//        AttachmentType<T> type = operator.apply(AttachmentType.builder(defaultValue)).build();
-//        this.register(path, NeoForgeRegistries.Keys.ATTACHMENT_TYPES, () -> type);
-//        return type;
-//    }
+    /**
+     * Registers an {@link AttachmentType} with the specified default value, that is configured with the supplied operator.
+     * <p>
+     * Immediately constructs the {@link AttachmentType} and returns it. Registration is deferred until the appropriate time.
+     */
+    @SuppressWarnings("UnstableApiUsage")
+    public <T> AttachmentType<T> attachment(String path, Supplier<T> defaultValue, UnaryOperator<AttachmentRegistry.Builder<T>> operator) {
+        return AttachmentRegistry.create(
+                ResourceLocation.fromNamespaceAndPath(this.modid, path),
+                (builder) -> operator.apply(builder).initializer(defaultValue)
+        );
+    }
 
     /**
      * Registers a {@link LootPoolEntryType} and returns it.
@@ -477,13 +470,13 @@ public class DeferredHelper {
         return type;
     }
 
-//    /**TODO: grab fake one
-//     * Registers a codec for an {@link IGlobalLootModifier} and returns it.
-//     */
-//    public <T extends IGlobalLootModifier> MapCodec<T> lootModifier(String path, MapCodec<T> codec) {
-//        this.register(path, NeoForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS, () -> codec);
-//        return codec;
-//    }
+    /**
+     * Registers a codec for an {@link ModifyDrops} and returns it.
+     */
+    public <T extends ModifyDrops> T lootModifier(T modifier) {
+        ModifyDrops.EVENT.register(modifier);
+        return modifier;
+    }
 
     /**
      * Registers a codec for a {@link LootItemCondition} and returns the new {@link LootItemConditionType}.

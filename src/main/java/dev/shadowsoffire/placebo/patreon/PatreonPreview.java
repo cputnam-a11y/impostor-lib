@@ -1,19 +1,14 @@
 package dev.shadowsoffire.placebo.patreon;
 
-import java.util.Locale;
-
-import org.apache.commons.lang3.text.WordUtils;
-
-import dev.shadowsoffire.placebo.Placebo;
 import dev.shadowsoffire.placebo.patreon.PatreonUtils.PatreonParticleType;
 import dev.shadowsoffire.placebo.patreon.PatreonUtils.WingType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import org.apache.commons.lang3.text.WordUtils;
+
+import java.util.Locale;
 
 @SuppressWarnings("deprecation")
 //@EventBusSubscriber(value = Dist.CLIENT, modid = Placebo.MODID)

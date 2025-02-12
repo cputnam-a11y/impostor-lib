@@ -5,14 +5,12 @@ import dev.shadowsoffire.placebo.color.GradientColor;
 import dev.shadowsoffire.placebo.commands.PlaceboCommand;
 import dev.shadowsoffire.placebo.events.ResourceReloadCallback;
 import dev.shadowsoffire.placebo.loot.StackLootEntry;
-import dev.shadowsoffire.placebo.network.PayloadHelper;
 import dev.shadowsoffire.placebo.payloads.ButtonClickPayload;
 import dev.shadowsoffire.placebo.payloads.PatreonDisablePayload;
 import dev.shadowsoffire.placebo.reload.ReloadListenerPayloads;
 import dev.shadowsoffire.placebo.systems.gear.GearSetRegistry;
 import dev.shadowsoffire.placebo.systems.mixes.MixRegistry;
 import dev.shadowsoffire.placebo.systems.wanderer.WandererTradesRegistry;
-import dev.shadowsoffire.placebo.tabs.TabFillingRegistry;
 import dev.shadowsoffire.placebo.util.PlaceboUtil;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -40,47 +38,24 @@ public class Placebo implements ModInitializer {
     public static final String MODID = "placebo";
     public static final Logger LOGGER = LogManager.getLogger(MODID);
 
-    public Placebo() {
-        bus.register(new PayloadHelper());
-    }
-
-    public void setup() {
-        PayloadHelper.registerPayload(new ButtonClickPayload.Provider());
-        PayloadHelper.registerPayload(new PatreonDisablePayload.Provider());
-        PayloadHelper.registerPayload(new ReloadListenerPayloads.Start.Provider());
-        PayloadHelper.registerPayload(new ReloadListenerPayloads.Content.Provider<>());
-        PayloadHelper.registerPayload(new ReloadListenerPayloads.End.Provider());
-        PlaceboUtil.registerCustomColor(GradientColor.RAINBOW);
-        GearSetRegistry.INSTANCE.registerToBus();
-        WandererTradesRegistry.INSTANCE.registerToBus();
-        MixRegistry.INSTANCE.registerToBus();
-    }
-
-    //    @SubscribeEvent
-    public void register() {
+    @Override
+    public void onInitialize() {
+        CommandRegistrationCallback.EVENT.register(this::registerCommands);
         Registry.register(
                 BuiltInRegistries.LOOT_POOL_ENTRY_TYPE,
                 loc("stack_entry"),
                 StackLootEntry.TYPE
         );
-//        e.register(Registries.LOOT_POOL_ENTRY_TYPE, helper -> {
-//            helper.register(loc("stack_entry"), StackLootEntry.TYPE);
-//        });
-    }
-
-    public void registerCommands(CommandDispatcher<CommandSourceStack> pDispatcher, CommandBuildContext registryAccess, Commands.CommandSelection environment) {
-        PlaceboCommand.register(pDispatcher, registryAccess);
-    }
-
-    public void registerServerReloadListener() {
+        ServerLifecycleEvents.SERVER_STARTING.register(s -> MixRegistry.applyMixes());
         ResourceManagerHelper
                 .get(PackType.SERVER_DATA)
                 .registerReloadListener(
                         new IdentifiableResourceReloadListener() {
                             final ResourceLocation id = loc("placebo_event");
+
                             @Override
                             public ResourceLocation getFabricId() {
-                                return id
+                                return id;
                             }
 
                             @Override
@@ -91,23 +66,23 @@ public class Placebo implements ModInitializer {
                             }
                         }
                 );
+        ButtonClickPayload.init();
+        PatreonDisablePayload.init();
+        ReloadListenerPayloads.Start.init();
+        ReloadListenerPayloads.Content.init();
+        ReloadListenerPayloads.End.init();
+        PlaceboUtil.registerCustomColor(GradientColor.RAINBOW);
+        GearSetRegistry.INSTANCE.registerToBus();
+        WandererTradesRegistry.INSTANCE.registerToBus();
+        MixRegistry.INSTANCE.registerToBus();
+        PlaceboConfig.load();
     }
 
-//    public void serverStart(ServerAboutToStartEvent e) {
-//        MixRegistry.applyMixes();
-//    }
+    public void registerCommands(CommandDispatcher<CommandSourceStack> pDispatcher, CommandBuildContext registryAccess, Commands.CommandSelection environment) {
+        PlaceboCommand.register(pDispatcher, registryAccess);
+    }
 
     public static ResourceLocation loc(String path) {
         return ResourceLocation.fromNamespaceAndPath(MODID, path);
-    }
-
-    @Override
-    public void onInitialize() {
-        CommandRegistrationCallback.EVENT.register(this::registerCommands);
-        register();
-        ServerLifecycleEvents.SERVER_STARTING.register(s -> MixRegistry.applyMixes());
-        registerServerReloadListener();
-        setup();
-        PlaceboConfig.load();
     }
 }
